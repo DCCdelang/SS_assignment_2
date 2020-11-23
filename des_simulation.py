@@ -48,6 +48,10 @@ def customer(env, name, counter, time_in_bank):
 servers = [1,2,4]
 
 for n in servers:
+    if n == 1:
+        print('server:', n)
+    else:
+        print('servers:', n)
     random.seed(RANDOM_SEED)
     env = simpy.Environment()
     counter = simpy.Resource(env, capacity=n)
