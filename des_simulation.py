@@ -1,22 +1,29 @@
+import numpy as np
 import random
-
 import simpy
 
 
 RANDOM_SEED = 420
-NEW_CUSTOMERS = 5  # Total number of customers
+# NEW_CUSTOMERS = 5  # Total number of customers
 INTERVAL_CUSTOMERS = 10.0  # Generate new customers roughly every x seconds
 MIN_PATIENCE = 1  # Min. customer patience
-MAX_PATIENCE = 3  # Max. customer patience
+MAX_PATIENCE = 10  # Max. customer patience
 
 
-def generate_customers(env, number, interval, counter):
+def generate_customers(env, interval, counter):
     """generates customers randomly"""
-    for i in range(number):
+    i = 0
+    waiting_times = []
+    while True:
+        i += 1
         c = customer(env, 'Customer%02d' % i, counter, time_in_bank=12.0)
         env.process(c)
         t = random.expovariate(1.0 / interval)
+        waiting_times.append(t)
         yield env.timeout(t)
+    print('avg waiting time:', np.mean(waiting_times))
+
+    
 
 
 def customer(env, name, counter, time_in_bank):
@@ -43,17 +50,4 @@ def customer(env, name, counter, time_in_bank):
             # We reneged
             print('%7.4f %s: RENEGED after %6.3f' % (env.now, name, wait))
 
-    
-# Setup and start the simulation with n = 1, 2 and 4. 
-servers = [1,2,4]
-
-for n in servers:
-    if n == 1:
-        print('server:', n)
-    else:
-        print('servers:', n)
-    random.seed(RANDOM_SEED)
-    env = simpy.Environment()
-    counter = simpy.Resource(env, capacity=n)
-    env.process(generate_customers(env, NEW_CUSTOMERS, INTERVAL_CUSTOMERS, counter))
-    env.run()
+    return wait
