@@ -20,7 +20,7 @@ for n in range(3):
     sns.distplot(serverdata, bins= 20, rug=True)
     plt.show()
 
-# %%#test
+# %%
 # Gives three plots of the waiting time per customer for one simulation
 for i in range(3):
     df3 = pd.read_csv("test_server_"+str(i)+".csv")
