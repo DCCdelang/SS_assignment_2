@@ -79,12 +79,6 @@ for i in range(len(N_servers)):
         data_list[0].append(i)
         data_list[1].append(system.waittime/system.total_cust)
 
-        # if n_sim == 0:
-            # # Filling datalist with waiting time per customer for first sim
-            # single_data = {"Waiting": system.waitlist}
-            # df2 = pd.DataFrame(single_data)
-            # df2.to_csv("test_server_"+str(i)+".csv")
-        
         # Collecting all customer waiting times to determine steady state
         if n_sim == 0:
             # Adding first list with waiting times per customer
