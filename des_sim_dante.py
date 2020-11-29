@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 LAMBDA = 10.0  # Generate new customers roughly every lambda seconds
 MU = 9 # Expected waiting time per customer in seconds
-N_CUSTOMERS = 3000
+N_CUSTOMERS = 10000
 N_servers = [1,2,4]
 N_sim = 1000
 
@@ -71,7 +71,7 @@ for i in range(len(N_servers)):
     print("Server", i)
     for n_sim in range(N_sim):
         # Choose random random seed
-        RANDOM_SEED = random.randint(1,700)
+        RANDOM_SEED = random.randint(1,100000)
         random.seed(RANDOM_SEED)
 
         # Setup and start the simulation

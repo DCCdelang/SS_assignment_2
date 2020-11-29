@@ -53,5 +53,7 @@ for i in range(3):
 df4 = pd.read_csv("waiting_pc.csv")
 for n in range(3):
     waitingdata = df4.loc[df4["Server"] == n, "Waiting pc"]
+    print("Shape of waitingdata per server is:", waitingdata.shape)
     sns.lineplot(data=waitingdata)
     plt.show()
+# %%
