@@ -9,11 +9,14 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-LAMBDA = 10.0  # Generate new customers roughly every lambda seconds
-MU = 9 # Expected waiting time per customer in seconds
+LAMBDA = 1.0  # Generate new customers roughly every lambda seconds
+MU = .92 # Expected waiting time per customer in seconds
 N_CUSTOMERS = 10000
 N_servers = [1,2,4]
 N_sim = 1000
+
+# Shortest Job First Scheduling (boolean)
+SJF = False
 
 '''
 todo:
@@ -23,9 +26,11 @@ It would be nice if you can first investigate a bit about how many numbers of cu
 
 class System(object):
     """Class for one server queue system"""
-    def __init__(self, env, n_server, n_cust, mu, lambd):
+    def __init__(self, env, n_server, n_cust, mu, lambd, SJF):
         self.env = env
         self.server = simpy.Resource(env, capacity=n_server)
+        self.server_sjf = simpy.resources.resource.PriorityResource(env, capacity=n_server)
+        self.SJF = SJF
         self.waittime = 0
         self.waitlist = []
         self.sojourn = 0
@@ -37,17 +42,22 @@ class System(object):
 def customer(env, system):
     """Customer arrives, is served and leaves."""
     arrive = env.now
-    with system.server.request() as req:
-        yield req 
+    # Time in system
+    tis = random.expovariate(1/system.mu)
 
-        # Time in system
-        tis = random.expovariate(1/system.mu)
+    if system.SJF == False:
+        request = system.server.request()
+    elif system.SJF == True:
+        request = system.server_sjf.request(priority=tis)
+
+    with request as req:
+        yield req 
         yield env.timeout(tis)
         
         # Sojourn time, real waiting time
         wait = env.now - arrive
 
-        # Append only steady state values of waiting time for customer > x
+        # Append only steady state values of waiting time > x customers
         if system.total_cust > 500:
             system.waittime += wait
         system.waitlist.append(wait)
@@ -75,7 +85,7 @@ for i in range(len(N_servers)):
 
         # Setup and start the simulation
         env = simpy.Environment()
-        system = System(env, N_servers[i], N_CUSTOMERS, MU, LAMBDA/N_servers[i])
+        system = System(env, N_servers[i], N_CUSTOMERS, MU, LAMBDA/N_servers[i],SJF)
 
         env.process(setup(env, system))
         env.run()
@@ -105,15 +115,27 @@ for i in range(len(N_servers)):
     for c in range(N_CUSTOMERS):
         serverlist.append(i)
 
-# Converting list with to csv for waiting time per customer
-sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
-df_waiting_pc = pd.DataFrame(sum_data)
-df_waiting_pc.to_csv("waiting_pc.csv")
+if SJF == False:
+    # Converting list with to csv for waiting time per customer
+    sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
+    df_waiting_pc = pd.DataFrame(sum_data)
+    df_waiting_pc.to_csv("waiting_pc.csv")
 
-# Data file with all mean waiting times per simulation
-data = {"Server": data_list[0], "Mean Wait": data_list[1]}
-df_data = pd.DataFrame(data)
-df_data.to_csv("data.csv")
+    # Data file with all mean waiting times per simulation
+    data = {"Server": data_list[0], "Mean Wait": data_list[1]}
+    df_data = pd.DataFrame(data)
+    df_data.to_csv("data.csv")
+
+elif SJF == True:
+    # Converting list with to csv for waiting time per customer
+    sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
+    df_waiting_pc_sjf = pd.DataFrame(sum_data)
+    df_waiting_pc_sjf.to_csv("waiting_pc_sjf.csv")
+
+    # Data file with all mean waiting times per simulation
+    data = {"Server": data_list[0], "Mean Wait": data_list[1]}
+    df_data_jsf = pd.DataFrame(data)
+    df_data_jsf.to_csv("data_sjf.csv")
 
 # Print statement to give summary of total run
 t1 = time.time()

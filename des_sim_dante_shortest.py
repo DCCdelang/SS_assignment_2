@@ -21,11 +21,12 @@ So if we want our data to be all close enough to the theoretical mean.
 It would be nice if you can first investigate a bit about how many numbers of customers (or total time of your simulation) you would need in the simulation at different rho (workload) rather than setting a constant value for all different rho situations. 
 '''
 
+
 class System(object):
     """Class for one server queue system"""
     def __init__(self, env, n_server, n_cust, mu, lambd):
         self.env = env
-        self.server = simpy.Resource(env, capacity=n_server)
+        self.server = simpy.resources.resource.PriorityResource(env, capacity=n_server)
         self.waittime = 0
         self.waitlist = []
         self.sojourn = 0
@@ -34,20 +35,19 @@ class System(object):
         self.lambd = lambd
         self.n_cust = n_cust
 
-def customer(env, system):
+def customer_shortest(env, system):
     """Customer arrives, is served and leaves."""
     arrive = env.now
-    with system.server.request() as req:
+    # Time in system
+    tis = random.expovariate(1/system.mu)
+    with system.server.request(priority=tis) as req:
         yield req 
-
-        # Time in system
-        tis = random.expovariate(1/system.mu)
         yield env.timeout(tis)
         
         # Sojourn time, real waiting time
         wait = env.now - arrive
 
-        # Append only steady state values of waiting time for customer > x
+        # Append only steady state values of waiting time > x customers
         if system.total_cust > 500:
             system.waittime += wait
         system.waitlist.append(wait)
@@ -56,7 +56,7 @@ def setup(env,system):
     """Adding customers for one system simulations"""
     for _ in range(system.n_cust):
         system.total_cust += 1
-        env.process(customer(env, system)) # Add customer to process
+        env.process(customer_shortest(env, system)) # Add customer to process
         t = random.expovariate(1/system.lambd)
         yield env.timeout(t)
 
@@ -96,7 +96,7 @@ for i in range(len(N_servers)):
             
     print("Finished all", N_sim, "simulations")
 
-# Creating list with the average waiting time per customer for all servers
+# Creating a csv with the mean waiting time per customer for all servers
 mean_waiting_pc = []
 serverlist = []
 for i in range(len(N_servers)):
@@ -107,13 +107,13 @@ for i in range(len(N_servers)):
 
 # Converting list with to csv for waiting time per customer
 sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
-df_waiting_pc = pd.DataFrame(sum_data)
-df_waiting_pc.to_csv("waiting_pc.csv")
+df_waiting_pc_sjf = pd.DataFrame(sum_data)
+df_waiting_pc_sjf.to_csv("waiting_pc_sjf.csv")
 
 # Data file with all mean waiting times per simulation
 data = {"Server": data_list[0], "Mean Wait": data_list[1]}
-df_data = pd.DataFrame(data)
-df_data.to_csv("data.csv")
+df_data_jsf = pd.DataFrame(data)
+df_data_jsf.to_csv("data_sjf.csv")
 
 # Print statement to give summary of total run
 t1 = time.time()
