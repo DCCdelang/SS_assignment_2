@@ -15,6 +15,13 @@ N_CUSTOMERS = 10000
 N_servers = [1,2,4]
 N_sim = 1000
 
+'''
+todo:
+So if we want our data to be all close enough to the theoretical mean. 
+It would be nice if you can first investigate a bit about how many numbers of customers (or total time of your simulation) you would need in the simulation at different rho (workload) rather than setting a constant value for all different rho situations. 
+'''
+
+
 class System(object):
     """Class for one server queue system"""
     def __init__(self, env, n_server, n_cust, mu, lambd):
