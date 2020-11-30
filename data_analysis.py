@@ -6,10 +6,30 @@ import numpy as np
 
 N_servers = [1,2,4]
 
+""" Dataframes based on different configurations"""
+# Mean waiting data with mu = 9 and lambda = 10
 df = pd.read_csv("data.csv")
 df_sjf = pd.read_csv("data_sjf.csv")
+
+# PC waiting data with mu = 9 and lambda = 10
 df_pc = pd.read_csv("waiting_pc.csv")
-df_pc_sjf = pd.read_csv("waiting_pc.csv")
+df_pc_sjf = pd.read_csv("waiting_pc_sjf.csv")
+
+# Mean waiting data with mu = .92 and lambda = 1
+df_92 = pd.read_csv("data_92.csv")
+df_sjf_92 = pd.read_csv("data_sjf_92.csv")
+
+# PC waiting data with mu = .92 and lambda = 1
+df_pc_92 = pd.read_csv("waiting_pc_92.csv")
+df_pc_sjf_92 = pd.read_csv("waiting_pc_sjf_92.csv")
+
+# Deterministic data with mu = .92 and lambda = 1
+df_det = pd.read_csv("data_det.csv")
+df_pc_det = pd.read_csv("waiting_pc_det.csv")
+
+# Deterministic data with mu = .92 and lambda = 1
+df_lt = pd.read_csv("data_lt.csv")
+df_pc_lt = pd.read_csv("waiting_pc_lt.csv")
 
 # perform serveral signifance tests for the mean waiting time for each server
 # split data batch means of for each server
@@ -18,13 +38,14 @@ def statistics(df):
     MM_2 = df[df["Server"] == 1]['Mean Wait']
     MM_4 = df[df["Server"] == 2]['Mean Wait']
 
-    # perform t-tests for different combinations
+    # Perform Welch t-tests for different combinations
     ttest_1_2 = stats.ttest_ind(MM_1, MM_2, equal_var = False)
     ttest_2_4 = stats.ttest_ind(MM_2, MM_4, equal_var = False)
 
     print('p value for t-test 1 and 2 servers:', ttest_1_2.pvalue)
     print('p value for t-test 2 and 4 servers:', ttest_2_4.pvalue)
 
+    # Perform ANOVA test
     anova = stats.f_oneway(MM_1, MM_2, MM_4)
     print('p value for ANOVA 1, 2 and 4 servers:', anova.pvalue)
 
@@ -57,7 +78,8 @@ def waiting_pc(df):
         waitingdata = df.loc[df["Server"] == n, "Waiting pc"]
         x = np.arange(waitingdata.shape[0])
         plot = sns.lineplot(x=x,y=waitingdata, label = "Server c="+str(N_servers[n]))
-        plot.set(ylabel="Waiting time per customer", xlabel="Customer number")
+        plot.set(ylabel="Waiting time per customer", xlabel="Customer number",\
+            xlim = (0, waitingdata.shape[0]))
         plt.title("Average waiting time per customer for different c")
         plt.legend()
     plt.show()
@@ -73,14 +95,15 @@ def compare_sjf(df,df_sjf,n):
     plt.legend()
     plt.show()
 
-""" Choose df or df_sjf """
-# boxplot_wait(df)
-# statistics(df)
-# mean_waiting(df, single = False)
-# mean_waiting(df_sjf, single = False)
+""" Choose a df dataframe """
+# boxplot_wait(df_92)
+# statistics(df_sjf)
+mean_waiting(df_92, single = False)
+mean_waiting(df_det, single = False)
+mean_waiting(df_lt, single = False)
 # compare_sjf(df, df_sjf,0)
 
-""" Choose df_pc or df_pc_sjf """
-# waiting_pc(df_pc) 
-
-
+""" Choose a df_pc dataframe"""
+waiting_pc(df_pc_92) 
+waiting_pc(df_pc_det) 
+waiting_pc(df_pc_lt) 

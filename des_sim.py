@@ -1,5 +1,8 @@
 """
-DES program to simulate M/M/n queue's
+DES program to simulate M/M/n, M/D/n and M/H/n queue's
+Authors: 
+Dante de Lang (dccdelang@gmail.com)
+Karim Semin (karimsemin@gmail.com)
 """
 
 import random
@@ -18,19 +21,28 @@ N_sim = 1000
 # Shortest Job First Scheduling (boolean)
 SJF = False
 
+# Service time distribution (0,1,2) : (M/M/n, M/D/n, M/H/n)
+# Important to check .csv file names for overwriting
+DIST = 1
+
 '''
 todo:
 So if we want our data to be all close enough to the theoretical mean. 
-It would be nice if you can first investigate a bit about how many numbers of customers (or total time of your simulation) you would need in the simulation at different rho (workload) rather than setting a constant value for all different rho situations. 
+It would be nice if you can first investigate a bit about how many numbers of 
+customers (or total time of your simulation) you would need in the simulation 
+at different rho (workload) rather than setting a constant value for all 
+different rho situations. 
 '''
 
 class System(object):
     """Class for one server queue system"""
-    def __init__(self, env, n_server, n_cust, mu, lambd, SJF):
+    def __init__(self, env, n_server, n_cust, mu, lambd, SJF, DIST):
         self.env = env
         self.server = simpy.Resource(env, capacity=n_server)
-        self.server_sjf = simpy.resources.resource.PriorityResource(env, capacity=n_server)
+        self.server_sjf = simpy.resources.resource.PriorityResource(env, \
+        capacity=n_server)
         self.SJF = SJF
+        self.DIST = DIST
         self.waittime = 0
         self.waitlist = []
         self.sojourn = 0
@@ -39,11 +51,26 @@ class System(object):
         self.lambd = lambd
         self.n_cust = n_cust
 
+def long_tail():
+    """ Function to create a long-tail distribution """
+    randint = random.randint(0,3)
+    # Values are based on a mean mu of 0.92
+    if randint != 0:
+        tis = random.expovariate(1/0.68)
+    else:
+        tis =random.expovariate(1)
+    return tis
+
 def customer(env, system):
     """Customer arrives, is served and leaves."""
     arrive = env.now
-    # Time in system
-    tis = random.expovariate(1/system.mu)
+    # Time in system, depending on distribution
+    if system.DIST == 0:
+        tis = random.expovariate(1/system.mu)
+    elif system.DIST == 1:
+        tis = 1/system.mu
+    elif system.DIST == 2:
+        tis = long_tail()
 
     if system.SJF == False:
         request = system.server.request()
@@ -85,7 +112,8 @@ for i in range(len(N_servers)):
 
         # Setup and start the simulation
         env = simpy.Environment()
-        system = System(env, N_servers[i], N_CUSTOMERS, MU, LAMBDA/N_servers[i],SJF)
+        system = System(env, N_servers[i], N_CUSTOMERS, MU, \
+                        LAMBDA/N_servers[i], SJF, DIST)
 
         env.process(setup(env, system))
         env.run()
@@ -119,12 +147,12 @@ if SJF == False:
     # Converting list with to csv for waiting time per customer
     sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
     df_waiting_pc = pd.DataFrame(sum_data)
-    df_waiting_pc.to_csv("waiting_pc.csv")
+    df_waiting_pc.to_csv("waiting_pc_det.csv")
 
     # Data file with all mean waiting times per simulation
     data = {"Server": data_list[0], "Mean Wait": data_list[1]}
     df_data = pd.DataFrame(data)
-    df_data.to_csv("data.csv")
+    df_data.to_csv("data_det.csv")
 
 elif SJF == True:
     # Converting list with to csv for waiting time per customer
@@ -139,5 +167,6 @@ elif SJF == True:
 
 # Print statement to give summary of total run
 t1 = time.time()
-print("\nDid", N_sim, "simulations with", N_CUSTOMERS, "customers, for server", N_servers, "in total time of ", round(t1-t0,3), "seconds\n")
+print("\nDid", N_sim, "simulations with", N_CUSTOMERS, "customers, for server",\
+    N_servers, "in total time of ", round(t1-t0,3), "seconds\n")
 
