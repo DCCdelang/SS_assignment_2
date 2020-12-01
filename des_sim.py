@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 LAMBDA = 1.0  # Generate new customers roughly every lambda seconds
 MU = .92 # Expected waiting time per customer in seconds
 N_CUSTOMERS = 10000
-N_servers = [1,2,4]
+N_servers = [1]
 N_sim = 1000
 
 # Shortest Job First Scheduling (boolean)
@@ -23,7 +23,7 @@ SJF = False
 
 # Service time distribution (0,1,2) : (M/M/n, M/D/n, M/H/n)
 # Important to check .csv file names for overwriting
-DIST = 1
+DIST = 0
 
 '''
 todo:
@@ -68,7 +68,7 @@ def customer(env, system):
     if system.DIST == 0:
         tis = random.expovariate(1/system.mu)
     elif system.DIST == 1:
-        tis = 1/system.mu
+        tis = system.mu
     elif system.DIST == 2:
         tis = long_tail()
 
@@ -85,7 +85,7 @@ def customer(env, system):
         wait = env.now - arrive
 
         # Append only steady state values of waiting time > x customers
-        if system.total_cust > 500:
+        if system.total_cust > 0:
             system.waittime += wait
         system.waitlist.append(wait)
 
@@ -101,6 +101,7 @@ t0 = time.time()
 
 data_list = [[],[]]
 sum_waiting = [[],[],[]]
+sum_waiting_matrix = []
 
 # Running all simulations for every n_server
 for i in range(len(N_servers)):
@@ -131,6 +132,9 @@ for i in range(len(N_servers)):
             # Continue adding sum_waiting list
             before = sum_waiting[i]
             sum_waiting[i] = np.add(before, system.waitlist)
+        
+        # Collecting all customer waiting times in matrix form
+        sum_waiting_matrix.append(system.waitlist)
             
     print("Finished all", N_sim, "simulations")
 
@@ -143,27 +147,32 @@ for i in range(len(N_servers)):
     for c in range(N_CUSTOMERS):
         serverlist.append(i)
 
+# Extra matrix with all waiting times per customer per simulation
+sum_waiting_matrix = sum_waiting_matrix
+df_waiting_matrix = pd.DataFrame(sum_waiting_matrix,dtype=float)
+df_waiting_matrix.to_csv("data/waiting_matrix.csv")
+
 if SJF == False:
     # Converting list with to csv for waiting time per customer
     sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
     df_waiting_pc = pd.DataFrame(sum_data)
-    df_waiting_pc.to_csv("waiting_pc_det.csv")
+    df_waiting_pc.to_csv("data/waiting_pc.csv")
 
     # Data file with all mean waiting times per simulation
     data = {"Server": data_list[0], "Mean Wait": data_list[1]}
     df_data = pd.DataFrame(data)
-    df_data.to_csv("data_det.csv")
+    df_data.to_csv("data/data_"+str(N_CUSTOMERS)+".csv")
 
 elif SJF == True:
     # Converting list with to csv for waiting time per customer
     sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
     df_waiting_pc_sjf = pd.DataFrame(sum_data)
-    df_waiting_pc_sjf.to_csv("waiting_pc_sjf.csv")
+    df_waiting_pc_sjf.to_csv("data/waiting_pc_sjf.csv")
 
     # Data file with all mean waiting times per simulation
     data = {"Server": data_list[0], "Mean Wait": data_list[1]}
     df_data_jsf = pd.DataFrame(data)
-    df_data_jsf.to_csv("data_sjf.csv")
+    df_data_jsf.to_csv("data/data_sjf.csv")
 
 # Print statement to give summary of total run
 t1 = time.time()
