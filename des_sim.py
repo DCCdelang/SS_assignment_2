@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 LAMBDA = 1.0  # Generate new customers roughly every lambda seconds
 MU = .92 # Expected waiting time per customer in seconds
 N_CUSTOMERS = 10000
-N_servers = [1]
+N_servers = [1,2,4]
 N_sim = 1000
 
 # Shortest Job First Scheduling (boolean)
@@ -23,16 +23,7 @@ SJF = False
 
 # Service time distribution (0,1,2) : (M/M/n, M/D/n, M/H/n)
 # Important to check .csv file names for overwriting
-DIST = 0
-
-'''
-todo:
-So if we want our data to be all close enough to the theoretical mean. 
-It would be nice if you can first investigate a bit about how many numbers of 
-customers (or total time of your simulation) you would need in the simulation 
-at different rho (workload) rather than setting a constant value for all 
-different rho situations. 
-'''
+DIST = 2
 
 class System(object):
     """Class for one server queue system"""
@@ -55,7 +46,7 @@ def long_tail():
     """ Function to create a long-tail distribution """
     randint = random.randint(0,3)
     # Values are based on a mean mu of 0.92
-    if randint != 0:
+    if randint == 0:
         tis = random.expovariate(1/0.68)
     else:
         tis =random.expovariate(1)
@@ -85,7 +76,7 @@ def customer(env, system):
         wait = env.now - arrive
 
         # Append only steady state values of waiting time > x customers
-        if system.total_cust > 0:
+        if system.total_cust > 500:
             system.waittime += wait
         system.waitlist.append(wait)
 
@@ -156,12 +147,12 @@ if SJF == False:
     # Converting list with to csv for waiting time per customer
     sum_data = {"Server":serverlist, "Waiting pc": mean_waiting_pc}
     df_waiting_pc = pd.DataFrame(sum_data)
-    df_waiting_pc.to_csv("data/waiting_pc.csv")
+    df_waiting_pc.to_csv("data/waiting_pc_lt.csv")
 
     # Data file with all mean waiting times per simulation
     data = {"Server": data_list[0], "Mean Wait": data_list[1]}
     df_data = pd.DataFrame(data)
-    df_data.to_csv("data/data_"+str(N_CUSTOMERS)+".csv")
+    df_data.to_csv("data/data_lt.csv")
 
 elif SJF == True:
     # Converting list with to csv for waiting time per customer

@@ -1,3 +1,10 @@
+"""
+DES program to simulate M/M/n, M/D/n and M/H/n queue's
+Authors: 
+Dante de Lang (dccdelang@gmail.com)
+Karim Semin (karimsemin@gmail.com)
+"""
+
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,15 +44,17 @@ def statistics(df):
     MM_4 = df[df["Server"] == 2]["Mean Wait"]
 
     for i in range(3):
-        df[df["Server"] == 2]["Mean Wait"]
-        print("E(W) for ")
+        mean = df[df["Server"] == i]["Mean Wait"].mean()
+        print("E(W) for server c =", i, "is", mean)
 
     # Perform Welch t-tests for different combinations
     ttest_1_2 = stats.ttest_ind(MM_1, MM_2, equal_var = False)
     ttest_2_4 = stats.ttest_ind(MM_2, MM_4, equal_var = False)
+    ttest_1_4 = stats.ttest_ind(MM_1, MM_4, equal_var = False)
 
     print("p value for t-test 1 and 2 servers:", ttest_1_2.pvalue)
     print("p value for t-test 2 and 4 servers:", ttest_2_4.pvalue)
+    print("p value for t-test 1 and 4 servers:", ttest_1_4.pvalue)
 
     # Perform ANOVA test
     anova = stats.f_oneway(MM_1, MM_2, MM_4)
@@ -80,7 +89,7 @@ def mean_waiting(df,single):
         plot.set_ylabel("Probability", fontsize=14)
         plot.set_xlabel("Mean waiting time",fontsize=14)
         # plt.title("PDF of mean waiting time for different c")
-        plt.legend(fontsize=14)
+        plt.legend(loc = 1,fontsize=14)
         if single == True:
             plt.show()
     if single != True:
@@ -96,19 +105,20 @@ def waiting_pc(df):
         x = np.arange(waitingdata.shape[0])
         plot = sns.lineplot(x=x,y=waitingdata, label = "Server c="+str(N_servers[n]))
         plot.set(ylabel="Waiting time", xlabel="Customer number",\
-            xlim = (0, waitingdata.shape[0]))
+            xlim = (0, waitingdata.shape[0]+150))
         # plt.title("Average waiting time per customer for different c")
+    # plt.vlines(500,-1,15,linestyles="dashed")
     plt.legend(fontsize=14)
     plt.tight_layout()
     plt.tick_params(labelsize=14)
-    plt.savefig("figures/waiting_pc_lt.png", dpi=300)
+    plt.savefig("figures/waiting_pc_sjf_92.png", dpi=300)
     plt.show()
 
 # Plot mean waiting time, with and without SJF for server n
 def compare_sjf(df,df_sjf,n):
     serverdata = df.loc[df["Server"] == n, "Mean Wait"]
-    plot = sns.distplot(serverdata, label = "Server")
-    serverdata_sjf = df_sjf.loc[df["Server"] == n, "Mean Wait"]
+    plot = sns.distplot(serverdata, label = "Server FIFO")
+    serverdata_sjf = df_sjf.loc[df_sjf["Server"] == n, "Mean Wait"]
     plot = sns.distplot(serverdata_sjf, label = "Server SJF")
     plot.set(ylabel="Probability",xlabel="Mean waiting time")
     # plt.title("PDF of mean waiting time with and without SJF for c=1")
@@ -116,6 +126,21 @@ def compare_sjf(df,df_sjf,n):
     plt.tick_params(labelsize=14)
     plt.tight_layout()
     plt.savefig("figures/compare_sjf_92.png", dpi=300)
+    plt.show()
+
+def compare_sjf_pc(df,df_sjf,n):
+    serverdata = df.loc[df["Server"] == n, "Waiting pc"]
+    x = np.arange(serverdata.shape[0])
+    plot = sns.lineplot(x=x,y=serverdata, label = "Server FIFO")
+    serverdata_sjf = df_sjf.loc[df_sjf["Server"] == n, "Waiting pc"]
+    plot = sns.lineplot(x=x,y=serverdata_sjf, label = "Server SJF")
+    plot.set(ylabel="Waiting time", xlabel="Customer number",\
+            xlim = (0, serverdata_sjf.shape[0]+150),\
+            ylim = (0,50))
+    plt.legend(loc=2, fontsize=14)
+    plt.tick_params(labelsize=14)
+    plt.tight_layout()
+    plt.savefig("figures/compare_sjf_pc_92.png", dpi=300)
     plt.show()
 
 def std_plot(dfs):
@@ -163,18 +188,24 @@ def different_N():
 """Choose a df dataframe"""
 # boxplot_wait(df_92)
 # statistics(df_92)
+# statistics(df_sjf_92)
+# statistics(df_det)
+# statistics(df_lt)
 # mean_waiting(df_92, single = False)
 # mean_waiting(df_det, single = False)
-# mean_waiting(df_lt, single = False)
+mean_waiting(df_lt, single = False)
+# mean_waiting(df_sjf_92, single = False)
 # compare_sjf(df_92, df_sjf_92,0)
 
 """Choose a df_pc dataframe"""
 # waiting_pc(df_pc_sjf_92) 
 # waiting_pc(df_pc_92) 
 # waiting_pc(df_pc_det) 
-waiting_pc(df_pc_lt) 
+# waiting_pc(df_pc_lt) 
+# compare_sjf_pc(df_pc_92, df_pc_sjf_92,0)
 
 """Choose matrix dataframe"""
 # std_plot([df_matrix_92,df_matrix_90,df_matrix_80,df_matrix_50])
 
 # different_N()
+
